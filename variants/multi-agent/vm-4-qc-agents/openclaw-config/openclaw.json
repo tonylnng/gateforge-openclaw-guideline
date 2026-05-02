@@ -1,0 +1,150 @@
+// =============================================================================
+// GateForge — VM-4: QC Agents (Spoke)
+// =============================================================================
+// Location: ~/.openclaw/openclaw.json
+// This is a SPOKE — communicates only with VM-1 Architect (Hub).
+// Supports multiple QC agents (qc-01, qc-02, ...) in one Gateway.
+//
+// BEFORE EDITING: cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak
+// AFTER EDITING:  openclaw doctor --fix && openclaw gateway restart
+//
+// Environment variables (${VAR}) are resolved from:
+//   1. Shell environment
+//   2. /opt/secrets/gateforge.env (sourced by the setup script)
+// =============================================================================
+{
+  // -------------------------------------------------------------------------
+  // Gateway — listens on Tailscale interface, token-protected
+  // -------------------------------------------------------------------------
+  gateway: {
+    port: 18789,
+    bind: "loopback",
+    tailscale: {
+      mode: "serve",
+      resetOnExit: false
+    },
+    auth: {
+      mode: "token",
+      token: "${GATEWAY_AUTH_TOKEN}",
+      allowTailscale: false
+    },
+    reload: {
+      mode: "hybrid",
+      debounceMs: 300
+    }
+  },
+
+  // -------------------------------------------------------------------------
+  // Webhooks — receives task dispatches from the Architect
+  // -------------------------------------------------------------------------
+  hooks: {
+    enabled: true,
+    token: "${GATEWAY_AUTH_TOKEN}",
+    path: "/hooks",
+    defaultSessionKey: "hook:gateforge",
+    allowRequestSessionKey: true,
+    allowedSessionKeyPrefixes: ["hook:", "gateforge:", "qc:"],
+    mappings: [
+      {
+        match: { path: "agent" },
+        action: "agent",
+        agentId: "qc-01",
+        deliver: true
+      }
+    ]
+  },
+
+  // -------------------------------------------------------------------------
+  // Agents — multiple QC agents sharing one Gateway
+  // -------------------------------------------------------------------------
+  // QC agents use a cost-effective model (MiniMax) for high-volume test runs.
+  // Each agent has its own workspace and session store.
+  //
+  // Adjust the list below to match your QC agent count (default: 3).
+  agents: {
+    defaults: {
+      model: {
+        primary: "minimax/MiniMax-M2.7",
+        fallbacks: ["anthropic/claude-sonnet-4-6"]
+      },
+      sandbox: {
+        mode: "all",                     // Full Docker sandbox for test execution
+        scope: "agent",
+        docker: {
+          image: "openclaw-sandbox:bookworm-slim",
+          setupCommand: "apt-get update && apt-get install -y git curl nodejs npm",
+          network: "none",
+          readOnlyRoot: false,
+          cpus: "1",
+          memoryMb: 1024
+        }
+      },
+      heartbeat: {
+        every: "30m",
+        mode: "next-heartbeat"
+      },
+      // QC tools — read/exec for running tests, browser for UI testing
+      tools: {
+        allow: ["exec", "read", "write", "edit", "process", "browser"]
+      }
+    },
+    list: [
+      {
+        id: "qc-01",
+        default: true,
+        name: "QC Agent 01",
+        workspace: "~/.openclaw/workspace-qc-01",
+        agentDir: "~/.openclaw/agents/qc-01/agent"
+      },
+      {
+        id: "qc-02",
+        name: "QC Agent 02",
+        workspace: "~/.openclaw/workspace-qc-02",
+        agentDir: "~/.openclaw/agents/qc-02/agent"
+      },
+      {
+        id: "qc-03",
+        name: "QC Agent 03",
+        workspace: "~/.openclaw/workspace-qc-03",
+        agentDir: "~/.openclaw/agents/qc-03/agent"
+      }
+      // Add more agents as needed:
+      // { id: "qc-04", name: "QC Agent 04", workspace: "~/.openclaw/workspace-qc-04", agentDir: "~/.openclaw/agents/qc-04/agent" },
+      // { id: "qc-05", name: "QC Agent 05", workspace: "~/.openclaw/workspace-qc-05", agentDir: "~/.openclaw/agents/qc-05/agent" },
+    ]
+  },
+
+  // -------------------------------------------------------------------------
+  // Sessions
+  // -------------------------------------------------------------------------
+  session: {
+    dmScope: "per-channel-peer",
+    reset: {
+      mode: "idle",
+      idleMinutes: 120
+    }
+  },
+
+  // -------------------------------------------------------------------------
+  // Cron — disabled on spokes
+  // -------------------------------------------------------------------------
+  cron: {
+    enabled: false
+  },
+
+  // -------------------------------------------------------------------------
+  // Environment variable references
+  // -------------------------------------------------------------------------
+  env: {
+    MINIMAX_API_KEY: "${MINIMAX_API_KEY}",
+    ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"    // Fallback model
+  },
+
+  // -------------------------------------------------------------------------
+  // Logging
+  // -------------------------------------------------------------------------
+  logging: {
+    level: "info",
+    consoleLevel: "warn"
+  }
+}

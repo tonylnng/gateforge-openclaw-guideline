@@ -1,0 +1,12 @@
+[Unit]
+Description=GateForge — watch Blueprint refs for notification dispatch
+Documentation=https://github.com/tonylnng/gateforge-openclaw-configs
+
+[Path]
+PathChanged=/opt/gateforge/blueprint/.git/refs/heads
+PathChanged=/opt/gateforge/blueprint/.git/packed-refs
+Unit=gf-notify-architect.service
+MakeDirectory=false
+
+[Install]
+WantedBy=multi-user.target

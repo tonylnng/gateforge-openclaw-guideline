@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Markdown + shell sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check VERSION matches latest tag (informational)
+        run: |
+          echo "VERSION file: $(cat VERSION)"
+          git fetch --tags --quiet || true
+          latest=$(git tag --sort=-v:refname | head -n1 || true)
+          echo "Latest tag: ${latest:-<none>}"
+
+      - name: Verify Class A/B/C policy section exists in CONTRIBUTING.md
+        run: |
+          grep -q "## File Authorship Rules — Class A / B / C" CONTRIBUTING.md \
+            || { echo "CONTRIBUTING.md is missing the Class A/B/C section"; exit 1; }
+
+      - name: Verify required top-level files
+        run: |
+          for f in README.md CONTRIBUTING.md CHANGELOG.md VERSION LICENSE; do
+            test -f "$f" || { echo "Missing top-level file: $f"; exit 1; }
+          done
+
+      - name: Verify guideline structure
+        run: |
+          for f in \
+            guideline/BLUEPRINT-GUIDE.md \
+            guideline/roles/pm/PM-GUIDE.md \
+            guideline/roles/system-design/SYSTEM-DESIGN-GUIDE.md \
+            guideline/roles/system-design/RESILIENCE-SECURITY-GUIDE.md \
+            guideline/roles/development/DEVELOPMENT-GUIDE.md \
+            guideline/roles/qa/QA-FRAMEWORK.md \
+            guideline/roles/qc/QC-GUIDE.md \
+            guideline/roles/operations/MONITORING-OPERATIONS-GUIDE.md \
+            guideline/adaptation/MULTI-AGENT-ADAPTATION.md \
+            guideline/adaptation/SINGLE-AGENT-ADAPTATION.md ; do
+            test -f "$f" || { echo "Missing methodology file: $f"; exit 1; }
+          done
+
+      - name: Verify variant runtime contracts
+        run: |
+          for f in \
+            variants/multi-agent/README.md \
+            variants/multi-agent/vm-1-architect/SOUL.md \
+            variants/multi-agent/vm-1-architect/AGENTS.md \
+            variants/multi-agent/vm-1-architect/USER.md \
+            variants/multi-agent/vm-1-architect/TOOLS.md \
+            variants/single-agent/README.md \
+            variants/single-agent/agent-workspace/SOUL.md \
+            variants/single-agent/agent-workspace/AGENTS.md \
+            variants/single-agent/agent-workspace/USER.md \
+            variants/single-agent/agent-workspace/TOOLS.md ; do
+            test -f "$f" || { echo "Missing variant file: $f"; exit 1; }
+          done
+
+      - name: Shellcheck install scripts
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          # SC1090/1091 = sourcing dynamic paths; SC2086 = quoted globs (these are
+          # acceptable for our install conventions, suppress as warnings only).
+          find variants/multi-agent/install tools -name '*.sh' -print0 \
+            | xargs -0 -I{} shellcheck -S warning -e SC1090,SC1091,SC2086 "{}" || true
+
+      - name: Smoke-test bootstrap-project.sh
+        run: |
+          mkdir -p /tmp/smoke
+          ./tools/bootstrap-project.sh demo_project /tmp/smoke
+          test -f /tmp/smoke/project/gateforge_demo_project.md
+          # Negative test — invalid name
+          ! ./tools/bootstrap-project.sh "Bad-Name" /tmp/smoke

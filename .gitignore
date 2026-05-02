@@ -1,0 +1,23 @@
+# Local secrets — never commit
+*.env
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Local test artefacts
+/tmp/
+/.cache/
+/node_modules/
+
+# Project-specific (Class C) — must NEVER appear in this repo
+project/
+gateforge_*.md
+!templates/gateforge_PROJECT_TEMPLATE.md
