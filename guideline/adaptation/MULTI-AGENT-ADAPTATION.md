@@ -4,41 +4,121 @@
 
 ---
 
-## 1. Topology in one paragraph
+## 1. Topology — One Picture
 
-The multi-agent variant runs **five OpenClaw instances** on five isolated VMs over a Tailscale mesh. The System Architect (VM-1) is the **hub**; Designer (VM-2), Developers (VM-3), QC (VM-4), and Operator (VM-5) are **spokes**. All cross-VM traffic is HTTPS to the spoke's Tailscale-MagicDNS hostname on port 18789, authenticated with `Authorization: Bearer ${VMn_GATEWAY_TOKEN}`, with results notified back to VM-1 via HMAC-signed callbacks. There is **no direct spoke-to-spoke communication.**
+```
+                          ┌──────────────────────────┐
+                          │   Operator (Telegram)    │
+                          └────────────┬─────────────┘
+                                       │ commands + Approvals
+                                       ▼
+        ┌──────────────────────────────────────────────────────────────────┐
+        │  VM-1  SYSTEM ARCHITECT  (HUB)                                   │
+        │  Claude Opus 4.6                                                  │
+        │  tonic-architect.sailfish-bass.ts.net : 18789                     │
+        │                                                                   │
+        │  • Owns the Blueprint (writes)                                    │
+        │  • Dispatches tasks to spokes                                     │
+        │  • Receives HMAC-signed callbacks                                 │
+        │  • Runs peer-review at every quality gate                         │
+        └────┬───────────────┬───────────────┬───────────────┬──────────────┘
+             │HTTPS+Bearer   │HTTPS+Bearer   │HTTPS+Bearer   │HTTPS+Bearer
+             │+JSON          │+JSON          │+JSON          │+JSON
+             ▼               ▼               ▼               ▼
+       ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
+       │  VM-2    │    │  VM-3    │    │  VM-4    │    │  VM-5    │
+       │ Designer │    │ Devs     │    │ QC pool  │    │ Operator │
+       │ Sonnet   │    │ Sonnet   │    │ MiniMax  │    │ MiniMax  │
+       │  4.6     │    │  4.6     │    │   2.7    │    │   2.7    │
+       │          │    │ dev-01   │    │  qc-01   │    │          │
+       │          │    │ dev-02   │    │  qc-02   │    │          │
+       └────┬─────┘    └────┬─────┘    └────┬─────┘    └────┬─────┘
+            │               │               │               │
+            │  HMAC-SHA256 callback to architect on every commit
+            └───────────────┴───────────────┴───────────────┘
+                                  │
+                                  ▼
+                    ┌────────────────────────────┐
+                    │  Shared Blueprint Git Repo │
+                    │  (read by all VMs,         │
+                    │   written by VM-1 only)    │
+                    └────────────────────────────┘
+```
+
+**Key invariant:** there is **no direct spoke-to-spoke communication**. Every cross-VM message goes through VM-1 either as a dispatch (architect → spoke) or as an HMAC-verified callback (spoke → architect).
 
 For exact gateway URLs, port assignments, hub/spoke wiring, HMAC secret layout, and install scripts, see [`variants/multi-agent/README.md`](../../variants/multi-agent/README.md).
 
 ---
 
-## 2. Role → VM mapping
+## 2. Role → VM Mapping
 
-This is how the role guides in `guideline/roles/` map onto the five VMs in the multi-agent topology.
+| Role guide                                          | Owning VM | Agent identity                  | OpenClaw instance      |
+|-----------------------------------------------------|-----------|---------------------------------|------------------------|
+| `roles/pm/PM-GUIDE.md`                              | VM-1      | `architect`                     | `vm-1-architect`       |
+| `roles/system-design/SYSTEM-DESIGN-GUIDE.md`        | VM-2      | `designer`                      | `vm-2-designer`        |
+| `roles/system-design/RESILIENCE-SECURITY-GUIDE.md`  | VM-2      | `designer`                      | `vm-2-designer`        |
+| `roles/development/DEVELOPMENT-GUIDE.md`            | VM-3      | `dev-01..dev-N`                 | `vm-3-developers`      |
+| `roles/qa/QA-FRAMEWORK.md`                          | VM-4      | `qc-01..qc-N`                   | `vm-4-qc-agents`       |
+| `roles/qc/QC-GUIDE.md`                              | VM-4      | `qc-01..qc-N`                   | `vm-4-qc-agents`       |
+| `roles/operations/MONITORING-OPERATIONS-GUIDE.md`   | VM-5      | `operator`                      | `vm-5-operator`        |
 
-| Role guide | Owning VM | Owning agent identity | OpenClaw instance |
-|---|---|---|---|
-| `roles/pm/PM-GUIDE.md` | VM-1 | `architect` (System Architect / PM) | `vm-1-architect` |
-| `roles/system-design/SYSTEM-DESIGN-GUIDE.md` | VM-2 | `designer` (System Designer) | `vm-2-designer` |
-| `roles/system-design/RESILIENCE-SECURITY-GUIDE.md` | VM-2 | `designer` | `vm-2-designer` |
-| `roles/development/DEVELOPMENT-GUIDE.md` | VM-3 | `dev-01..dev-N` (Developer pool) | `vm-3-developers` |
-| `roles/qa/QA-FRAMEWORK.md` | VM-4 | `qc-01..qc-N` (QC pool — owns test design AND execution) | `vm-4-qc-agents` |
-| `roles/qc/QC-GUIDE.md` | VM-4 | `qc-01..qc-N` | `vm-4-qc-agents` |
-| `roles/operations/MONITORING-OPERATIONS-GUIDE.md` | VM-5 | `operator` | `vm-5-operator` |
-
-> **Note on QA + QC.** In the multi-agent variant, **VM-4 owns both QA (test design) and QC (test execution)**. The two role guides are still separate so the agent reads its responsibilities for each phase distinctly, but they are executed by the same agent pool. References in the methodology to "the QC agent" cover both phases.
+> **Note on QA + QC.** In multi-agent, **VM-4 owns both QA (test design) and QC (test execution)**. The two role guides remain separate so the agent reads its responsibilities for each phase distinctly, but they execute on the same VM/agent pool. References in the methodology to "the QC agent" cover both phases.
 
 ---
 
-## 3. Reading-order overrides
+## 3. Dispatch Sequence — One Cycle
 
-Where a role guide refers to a sibling role abstractly ("the System Architect", "the Developer", "the QC agent"), the multi-agent agent should resolve those references to the specific VM/agent identity in the table above. Where a guide refers to a specific runtime detail (gateway URL, MagicDNS hostname, port), use the values from `variants/multi-agent/<vm>/AGENTS.md` — those are authoritative for the runtime.
+The full cross-VM message flow for a single dispatch (Architect → Designer, with Designer's callback):
+
+```mermaid
+sequenceDiagram
+    participant Op as Operator (Telegram)
+    participant A  as VM-1 Architect
+    participant D  as VM-2 Designer
+    participant BP as Blueprint Git
+
+    Op  ->> A: "Start design phase"
+    A   ->> A: Read project/state.md (phase=PM, completed)
+    A   ->> A: Update state.md (phase=DESIGN)
+    A  ->>+ D: POST /hooks/agent\nAuthorization: Bearer ${VM2_GATEWAY_TOKEN}\n{taskId, agentId:"designer", phase:"DESIGN", ...}
+    D  -->>- A: 202 Accepted (task queued)
+    D   ->> D: Read SOUL.md, AGENTS.md, USER.md, TOOLS.md
+    D   ->> D: Read ../../../guideline/adaptation/MULTI-AGENT-ADAPTATION.md
+    D   ->> D: Read ../../../guideline/roles/system-design/*.md
+    D   ->> D: Produce deliverable
+    D   ->> BP: git push (commit with GateForge-Phase trailer)
+    D   ->> A: POST /hooks/agent\nX-GF-Signature: <HMAC-SHA256>\n{taskId, status:"completed", deliverableUrl, ...}
+    A   ->> A: Verify HMAC against ${VM2_AGENT_SECRET}
+    A   ->> A: Run peer-review checklist
+    A  ->>+ Op: "DESIGN ready for review — Approve?"
+    Op -->>- A: "Approved"
+    A   ->> A: Update state.md (DESIGN=approved, ready for DEV)
+```
 
 ---
 
-## 4. Hand-off protocol
+## 4. Multi-Agent Translation Table
 
-The methodology is written for a sequence of phases (PM → DESIGN → DEV → QA → QC → OPS). In multi-agent, every phase boundary is also a **VM boundary**. Hand-offs therefore use **explicit network calls plus signed notifications**:
+When the methodology refers to abstract concepts ("the System Architect", "transition to next phase", "peer review"), translate them to multi-agent runtime as follows:
+
+| Methodology says…                              | Multi-agent reads it as…                                                         |
+|------------------------------------------------|----------------------------------------------------------------------------------|
+| "the System Architect"                         | the agent on VM-1 (`tonic-architect`)                                            |
+| "the System Designer"                          | the agent on VM-2 (`tonic-designer`)                                             |
+| "the Developer"                                | a worker in the VM-3 pool (`dev-01`, `dev-02`, …)                                |
+| "the QC agent"                                 | a worker in the VM-4 pool (`qc-01`, `qc-02`, …) — owns BOTH QA and QC phases     |
+| "the Operator"                                 | the agent on VM-5 (`tonic-operator`)                                             |
+| "transition to the next phase"                 | architect closes current task, dispatches next task to next VM, awaits callback  |
+| "peer review"                                  | architect re-runs the producing spoke's checklist on the spoke's commit          |
+| "submit work for review"                       | spoke `git push` + spoke fires HMAC callback                                     |
+| "escalate the conflict"                        | spoke posts `agent-disagreement` payload to architect, who arbitrates            |
+
+Where the methodology references runtime details (gateway URL, MagicDNS hostname, port), the values in `variants/multi-agent/<vm>/AGENTS.md` are authoritative.
+
+---
+
+## 5. Hand-off Protocol — Detailed Wire Format
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -47,19 +127,27 @@ The methodology is written for a sequence of phases (PM → DESIGN → DEV → Q
 │   POST https://tonic-<spoke>.sailfish-bass.ts.net:18789/hooks/agent        │
 │   Authorization: Bearer ${VMn_GATEWAY_TOKEN}                               │
 │   Content-Type: application/json                                           │
-│   Body: structured JSON (see Appendix A in BLUEPRINT-GUIDE)                │
+│                                                                            │
+│   {                                                                        │
+│     "taskId":      "<uuid>",                                               │
+│     "agentId":     "designer | dev-01 | qc-01 | operator",                 │
+│     "phase":       "DESIGN | DEV | QA | QC | OPS",                         │
+│     "iteration":   <int>,                                                  │
+│     "blueprintRef":"<git sha>",                                            │
+│     "instructions":"<structured task>"                                     │
+│   }                                                                        │
 │                                                                            │
 │ Result flow (spoke → Architect):                                           │
 │                                                                            │
-│   1. Spoke writes its deliverable to the Blueprint repo and                │
-│      pushes the commit.                                                    │
-│   2. Spoke's host-side `gf-notify-architect.service` watches               │
-│      the push, signs the payload with HMAC-SHA256 using its                │
-│      VMn_AGENT_SECRET, and POSTs to                                        │
-│      https://tonic-architect.sailfish-bass.ts.net:18789/hooks/agent        │
+│   1. Spoke writes its deliverable to the Blueprint repo and pushes.        │
+│   2. Spoke's host-side `gf-notify-architect.service` watches the push,     │
+│      signs the payload with HMAC-SHA256 using its VMn_AGENT_SECRET,        │
+│      and POSTs to:                                                         │
+│        https://tonic-architect.sailfish-bass.ts.net:18789/hooks/agent      │
+│      with header: X-GF-Signature: <hex>                                    │
 │   3. Architect verifies the signature against the secret in                │
-│      USER.md → Agent Notification Registry, then proceeds                  │
-│      with quality-gate evaluation.                                         │
+│      USER.md → Agent Notification Registry, then proceeds with             │
+│      quality-gate evaluation.                                              │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -67,45 +155,67 @@ Wherever the methodology says *"the agent transitions to the next phase"*, the m
 
 ---
 
-## 5. Quality-gate evaluation
+## 6. Quality-Gate Evaluation — Two-Pass Review
 
-The methodology's phase-exit checklists are evaluated by the **System Architect (VM-1)**, not by the producing spoke. The producing spoke writes its self-review checklist into the Blueprint commit; the Architect re-runs it as a **peer-review** before approving the gate.
+Multi-agent gives every gate a **two-pass review**:
 
-This is a key strength of the multi-agent variant: **two-pass review** (self + peer) at every gate. Single-agent loses this and compensates by requiring an explicit Telegram-approved boundary on every `Approved` document transition — see [`SINGLE-AGENT-ADAPTATION.md`](SINGLE-AGENT-ADAPTATION.md).
+```
+                    Producing spoke
+                         │
+                         │  1. Self-review (spoke runs its own
+                         │     phase-exit checklist)
+                         │  2. Commits with checklist results
+                         │     in commit body
+                         ▼
+              ┌─────────────────────┐
+              │  Blueprint Git push │
+              └──────────┬──────────┘
+                         │  HMAC callback
+                         ▼
+                    VM-1 Architect
+                         │
+                         │  3. Peer-review (Architect re-runs
+                         │     the same checklist on the
+                         │     committed work)
+                         │  4. Verdict: Approved / Rework
+                         ▼
+                ┌────────────────────┐
+                │  Telegram operator │  ← only if PM exit or prod OPS gate
+                └────────────────────┘
+```
+
+This **two-pass review** is the structural strength of multi-agent. Single-agent has only self-review and compensates with mandatory Telegram approval — see [`SINGLE-AGENT-ADAPTATION.md`](SINGLE-AGENT-ADAPTATION.md).
 
 ---
 
-## 6. Conflict resolution
+## 7. Conflict Resolution
 
-Where the methodology says *"if a conflict arises, escalate"*, multi-agent resolves it as follows:
-
-1. The detecting agent posts an `agent-disagreement` payload to the Architect (VM-1).
-2. The Architect arbitrates against the Blueprint (the single source of truth) and writes a `decision-log.md` entry.
-3. If the Architect cannot resolve, the Architect escalates to the human operator via Telegram with a structured summary.
+```mermaid
+flowchart TD
+    A[Spoke detects conflict] --> B[Spoke POSTs agent-disagreement payload to Architect]
+    B --> C{Architect arbitrates against Blueprint}
+    C -->|Resolvable| D[Architect writes decision-log.md]
+    D --> E[Architect dispatches corrected task to spoke]
+    E --> F{Retry count < 3?}
+    F -->|Yes| G[Spoke retries]
+    F -->|No| H[Architect escalates to operator on Telegram]
+    C -->|Not resolvable| H
+    H --> I[Wait for operator directive]
+```
 
 After **three retries on the same task**, the Architect must escalate to the human regardless. This cap is explicit in `vm-1-architect/USER.md`.
 
 ---
 
-## 7. Filename, commit, and audit conventions
-
-These rules are unchanged from the methodology. They apply identically in multi-agent:
-
-- All-lowercase markdown filenames except top-level capitalised guides (`SOUL.md`, `AGENTS.md`, `USER.md`, `TOOLS.md`, `*-GUIDE.md`, `*-FRAMEWORK.md`).
-- Conventional commits with phase prefix in subject and `GateForge-Phase` / `GateForge-Iteration` / `GateForge-Status` / `GateForge-Summary` trailers.
-- Maximum three retries per task before human escalation.
-
----
-
-## 8. What is multi-agent-only
+## 8. Multi-Agent-Only Constructs
 
 The following constructs **only** exist in multi-agent. If you see a reference in the methodology that depends on them, you are reading the multi-agent execution path:
 
-- Per-VM `OPENCLAW_TOKEN`, `${VMn_GATEWAY_TOKEN}`, `${VMn_AGENT_SECRET}`.
-- `gf-notify-architect.service` host-side notifier (systemd unit, watch + HMAC sign + POST).
-- `Authorization: Bearer` headers on cross-VM dispatch.
-- `AgentId` field in dispatch payloads (e.g. `dev-01`, `qc-02`).
-- Per-VM Tailscale-MagicDNS hostnames (`tonic-<role>.sailfish-bass.ts.net`).
-- Cross-VM peer review at quality gates.
+- Per-VM `OPENCLAW_TOKEN`, `${VMn_GATEWAY_TOKEN}`, `${VMn_AGENT_SECRET}`
+- `gf-notify-architect.service` host-side notifier (systemd unit, watch + HMAC sign + POST)
+- `Authorization: Bearer` headers on cross-VM dispatch
+- `agentId` field in dispatch payloads (e.g. `dev-01`, `qc-02`)
+- Per-VM Tailscale-MagicDNS hostnames (`tonic-<role>.sailfish-bass.ts.net`)
+- Cross-VM **peer review** at quality gates
 
 If your variant's `AGENTS.md` does not declare remote agents, you are not running multi-agent — read [`SINGLE-AGENT-ADAPTATION.md`](SINGLE-AGENT-ADAPTATION.md) instead.

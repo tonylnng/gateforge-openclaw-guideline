@@ -14,6 +14,28 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ---
 
+## [2.1.0] — 2026-05-02
+
+### Added
+
+- **Visual presentation upgrade** across the repo, in the same diagrammatic style as the legacy single-agent README. Additive only — every methodology body is unchanged. No behavioural change, no project re-baseline.
+  - `README.md`: layered-architecture diagram (Methodology / Runtime / Project), variant-comparison table, repo-layout tree with class annotations, two-layer architecture diagram, file-class summary table, mermaid phase machine, forward-transition guards table, variant-pick decision tree, industry-standards table.
+  - `guideline/BLUEPRINT-GUIDE.md`: prepended a **Visual Overview** section — SDLC pipeline ASCII diagram, Blueprint contents box, mermaid Blueprint-bootstrap flow, quality-gates table.
+  - `guideline/adaptation/MULTI-AGENT-ADAPTATION.md`: hub-spoke topology diagram, role→VM mapping table, mermaid dispatch sequence, multi-agent translation table, wire-format box, two-pass review diagram, mermaid conflict-resolution flow.
+  - `guideline/adaptation/SINGLE-AGENT-ADAPTATION.md`: single-VM topology diagram, role→identity mapping table, mermaid phase machine + forward-transition guards table, single-agent translation table, hand-off recipe box, self-review + Telegram backstop diagram, mermaid conflict flow.
+  - `variants/multi-agent/README.md`: variant comparison table, ASCII topology, VM-assignments table, reading-order diagram, mermaid dispatch sequence, repo-layout tree, two-pass review diagram, migration diagram.
+  - `variants/single-agent/README.md`: variant comparison table, ASCII topology, phase-state table + mermaid state diagram, forward-transition guards table, reading-order diagram, repo-layout tree, workspace-copy diagram, secrets-layout diagram, mermaid project-bootstrap flow, migration diagram.
+
+### Changed
+
+- Bumped `VERSION` to `2.1.0`.
+
+### Notes
+
+- This is a **MINOR** release per [`CONTRIBUTING.md` § Versioning](CONTRIBUTING.md#versioning): additive presentation, backwards-compatible. Existing projects pinned to `v2.0.0` need do nothing. Re-pinning is optional.
+
+---
+
 ## [2.0.0] — 2026-05-02
 
 ### Changed (BREAKING)
@@ -58,5 +80,6 @@ For projects currently pinned to either of the archived repos:
 
 Earlier versions lived in `tonylnng/gateforge-openclaw-configs` (multi-agent, v1.0.0) and `tonylnng/gateforge-openclaw-single` (single-agent, v1.0.0). Both repos are archived and read-only as of 2026-05-02. Their full history is preserved at the `archived-final` git tag in each archived repo.
 
-[Unreleased]: https://github.com/tonylnng/gateforge-openclaw-guideline/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/tonylnng/gateforge-openclaw-guideline/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/tonylnng/gateforge-openclaw-guideline/releases/tag/v2.1.0
 [2.0.0]: https://github.com/tonylnng/gateforge-openclaw-guideline/releases/tag/v2.0.0

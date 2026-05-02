@@ -17,6 +17,77 @@
 
 ---
 
+## Visual Overview
+
+### How the Blueprint flows through the SDLC
+
+```
+   ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+   │      PM      │───▶│    DESIGN    │───▶│     DEV      │───▶│      QA      │───▶│      QC      │───▶│     OPS      │
+   │              │    │              │    │              │    │              │    │              │    │              │
+   │ Requirements │    │ Architecture │    │ Source code  │    │ Test plan    │    │ Test runs    │    │ Deploy +     │
+   │ Blueprint    │    │ + Resilience │    │ + dev notes  │    │ (IEEE 829)   │    │ Gate verdict │    │ SLO monitor  │
+   │ (THIS guide) │    │ + Security   │    │              │    │              │    │              │    │              │
+   └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘    └──────────────┘
+         │                    │                    │                    │                    │                    │
+         ▼                    ▼                    ▼                    ▼                    ▼                    ▼
+   project/blueprint/   project/design/      source repo +        project/qa/         project/qc/          deploy logs
+         **                  **               project/dev/**       test-plan.md       test-runs/**         + dashboards
+```
+
+### What the Blueprint produces
+
+```
+                    ┌────────────────────────────────────────┐
+                    │         project/blueprint/             │
+                    │  (this guide tells you how to write it) │
+                    ├────────────────────────────────────────┤
+                    │  • requirements.md   (IEEE 830 SRS)    │
+                    │  • use-cases.md                        │
+                    │  • acceptance-criteria.md              │
+                    │  • non-functional-requirements.md      │
+                    │  • risks.md                            │
+                    │  • glossary.md                         │
+                    │  • stakeholders.md                     │
+                    │  • cost-envelope.md                    │
+                    │                                        │
+                    │  + Technical Consideration Checklists: │
+                    │    - Sentinel / Circuit Breaker        │
+                    │    - CQRS                              │
+                    │    - Security                          │
+                    │    - User Access Rights                │
+                    └────────────────────────────────────────┘
+```
+
+### How the Blueprint relates to project state
+
+```mermaid
+flowchart LR
+    A[Operator gives intent on Telegram] --> B[Agent reads BLUEPRINT-GUIDE]
+    B --> C[Discovery Q&A consolidated]
+    C --> D[Draft project/blueprint/**]
+    D --> E{Comprehensiveness checklist all green?}
+    E -->|No| C
+    E -->|Yes| F[Status -> In-Review]
+    F --> G[Telegram summary to operator]
+    G --> H{Operator replies Approved?}
+    H -->|Rework| C
+    H -->|Approved| I[Status -> Approved]
+    I --> J[project/state.md phase=DESIGN]
+    J --> K[Hand off to DESIGN phase]
+```
+
+### Quality gates this guide enforces
+
+| Stage              | Gate                                                                 | Who decides                     |
+|--------------------|----------------------------------------------------------------------|---------------------------------|
+| Discovery complete | All 8 required inputs answered or auto-derived with confidence       | Agent (self or peer per variant)|
+| Draft complete     | Comprehensiveness checklist (§7) all green                            | Agent (self or peer per variant)|
+| Approval           | Operator replied `Approved` on Telegram to the Blueprint summary     | **Operator (mandatory)**        |
+| Pin                | `project/state.md` records `guideline_commit` matching this repo SHA | Agent                           |
+
+---
+
 ## Table of Contents
 
 1. [Requirements Gathering Methodology](#1-requirements-gathering-methodology)
