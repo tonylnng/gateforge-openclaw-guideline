@@ -4,7 +4,7 @@
 >
 > The single source of truth for the GateForge Agentic SDLC pipeline — methodology, role guides, and OpenClaw runtime contracts for both the multi-agent and single-agent variants.
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](./VERSION) [![License](https://img.shields.io/badge/license-Proprietary-lightgrey.svg)](./LICENSE) [![Status](https://img.shields.io/badge/status-active-success.svg)](#release-status) [![Branching](https://img.shields.io/badge/branching-trunk--based-informational.svg)](./CONTRIBUTING.md#branching-model) [![SemVer](https://img.shields.io/badge/versioning-SemVer%202.0.0-orange.svg)](./CONTRIBUTING.md#versioning)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](./VERSION) [![License](https://img.shields.io/badge/license-Proprietary-lightgrey.svg)](./LICENSE) [![Status](https://img.shields.io/badge/status-active-success.svg)](#release-status) [![Branching](https://img.shields.io/badge/branching-trunk--based-informational.svg)](./CONTRIBUTING.md#branching-model) [![SemVer](https://img.shields.io/badge/versioning-SemVer%202.0.0-orange.svg)](./CONTRIBUTING.md#versioning)
 
 ---
 
@@ -125,9 +125,15 @@ gateforge-openclaw-guideline/
 │       ├── install/                        │
 │       └── docs/                           ┘
 │
+├── docs/
+│   └── adr/                                ← Architecture Decision Records
+│       ├── README.md                       │  (Class B — methodology decisions,
+│       └── NNNN-*.md                       │     one ADR per file, never deleted)
+│
 ├── templates/
-│   └── gateforge_PROJECT_TEMPLATE.md       ← Class C scaffold
-│                                              (copied to each project repo)
+│   ├── gateforge_PROJECT_TEMPLATE.md       ← Class C scaffold
+│   │                                          (copied to each project repo)
+│   └── ADR-TEMPLATE.md                     ← ADR scaffold (Class B or C)
 │
 ├── tools/
 │   ├── guard-class-ab.sh                   ← pre-commit guard for project repos
@@ -285,6 +291,22 @@ The agent re-reads from this **pinned SHA** for the project's life. Upgrades req
 
 ---
 
+## Architecture Decisions
+
+Significant methodology decisions are recorded as **Architecture Decision Records (ADRs)** under [`docs/adr/`](docs/adr/README.md). Each ADR captures *why* a decision was made, *what* alternatives were considered, and *what* the consequences are — so future readers (human or agent) don't re-litigate settled questions.
+
+| #    | Decision                                                                                  |
+|------|-------------------------------------------------------------------------------------------|
+| 0001 | [Two-layer architecture: methodology + variants](docs/adr/0001-two-layer-architecture.md) |
+| 0002 | [Class A / B / C file authorship policy](docs/adr/0002-class-a-b-c-file-policy.md)        |
+| 0003 | [SemVer with GateForge bump triggers](docs/adr/0003-semver-policy.md)                     |
+| 0004 | [Trunk-based development with tags](docs/adr/0004-trunk-based-with-tags.md)               |
+| 0005 | [Multi-agent vs single-agent variant split](docs/adr/0005-multi-vs-single-variant-split.md) |
+
+New ADRs are added as **MINOR** bumps. Project-specific ADRs live in each project's Blueprint repo at `project/adr/`, not here. Template: [`templates/ADR-TEMPLATE.md`](templates/ADR-TEMPLATE.md).
+
+---
+
 ## Versioning
 
 This repo follows **Semantic Versioning 2.0.0** with GateForge-specific bump triggers:
@@ -317,7 +339,8 @@ The methodology in `guideline/` is grounded in published standards. Both variant
 
 | Version | Date       | Status                                                                                       |
 |---------|------------|----------------------------------------------------------------------------------------------|
-| 2.1.0   | 2026-05-02 | **Active** — visual presentation upgrade (diagrams, tables, mermaid) across all top docs    |
+| 2.2.0   | 2026-05-02 | **Active** — ADR template + 5 retroactive Architecture Decision Records under `docs/adr/`     |
+| 2.1.0   | 2026-05-02 | Superseded — visual presentation upgrade (diagrams, tables, mermaid) across all top docs     |
 | 2.0.0   | 2026-05-02 | Superseded — initial consolidation from `gateforge-openclaw-configs` and `gateforge-openclaw-single` |
 
 The two source repositories ([`gateforge-openclaw-configs`](https://github.com/tonylnng/gateforge-openclaw-configs), [`gateforge-openclaw-single`](https://github.com/tonylnng/gateforge-openclaw-single)) are **archived** as of v2.0.0. All future work happens here.

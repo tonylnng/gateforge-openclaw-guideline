@@ -13,8 +13,9 @@ This repository is the single source of truth for the GateForge Agentic SDLC gui
 5. [Commit Convention](#commit-convention)
 6. [Pull-Request Workflow](#pull-request-workflow)
 7. [Adding a New Role Guide](#adding-a-new-role-guide)
-8. [Adding a New Variant](#adding-a-new-variant)
-9. [Pre-Commit Guard](#pre-commit-guard)
+8. [Adding an Architecture Decision Record (ADR)](#adding-an-architecture-decision-record-adr)
+9. [Adding a New Variant](#adding-a-new-variant)
+10. [Pre-Commit Guard](#pre-commit-guard)
 
 ---
 
@@ -244,6 +245,38 @@ If GateForge gains a new phase (e.g. *Data Engineering*, *ML Ops*), follow this 
 4. Update `templates/gateforge_PROJECT_TEMPLATE.md` if the new phase produces project-specific content.
 5. Bump MINOR.
 6. Add a `CHANGELOG.md` entry under "Added".
+
+---
+
+## Adding an Architecture Decision Record (ADR)
+
+Significant methodology decisions — anything that, six months from now, a reader (human or agent) might ask *"why was this done this way?"* about — are recorded as ADRs under [`docs/adr/`](docs/adr/README.md).
+
+When to write an ADR:
+
+- You're proposing or accepting a change that shapes how every project will work (e.g., new phase model, new review process, new pinning rule).
+- You're rejecting a tempting alternative and want the rejection on record so it isn't re-litigated.
+- You're superseding a previous ADR.
+
+Workflow:
+
+1. Pick the next sequential number from [`docs/adr/README.md`](docs/adr/README.md). Zero-pad to 4 digits. **Never** reuse, renumber, or delete a number.
+2. Copy the template:
+   ```bash
+   cp templates/ADR-TEMPLATE.md docs/adr/NNNN-kebab-case-title.md
+   ```
+3. Fill in **Context**, **Decision**, **Consequences**, **Alternatives Considered**, **References**, and **Revision History**. The hardest section is *Alternatives Considered* — do not skip it.
+4. Open a PR titled `adr: ADR-NNNN <title>`. Set status to `Proposed` initially.
+5. On merge, set status to `Accepted` and add a row to the ADR index in `docs/adr/README.md`.
+6. **Bump MINOR** and add a `CHANGELOG.md` entry under "Added".
+
+To supersede an existing ADR:
+
+1. Write the new ADR with the next sequential number; reference the old one in `## 5. References`.
+2. In the **old** ADR, change `Status` to `Superseded by ADR-NNNN` and add a Revision History row.
+3. Update the index — do **not** delete the old row, just mark its status `Superseded`.
+
+**Class B vs Class C:** ADRs that shape the guideline itself live here (`docs/adr/`, Class B). Project-specific ADRs (e.g. "Project Acme Billing chose Postgres") live in that project's Blueprint repo at `project/adr/` (Class C) and **must not** be committed here.
 
 ---
 

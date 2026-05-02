@@ -14,6 +14,27 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ---
 
+## [2.2.0] — 2026-05-02
+
+### Added
+
+- **Architecture Decision Records (ADRs)** — additive Class B documentation. No methodology change, no project re-baseline.
+  - `templates/ADR-TEMPLATE.md` — Nygard-style ADR template with Context / Decision / Consequences / Alternatives Considered / References / Revision History sections, ready to copy for new methodology ADRs (`docs/adr/`) or project ADRs (`<project>-blueprint/project/adr/`).
+  - `docs/adr/README.md` — ADR index, write/supersede workflow, Class B vs Class C guidance, naming and numbering conventions.
+  - `docs/adr/0001-two-layer-architecture.md` — records the methodology-vs-runtime-contract split.
+  - `docs/adr/0002-class-a-b-c-file-policy.md` — records the upstream-only / project-only file authorship rule.
+  - `docs/adr/0003-semver-policy.md` — records GateForge-specific SemVer bump triggers.
+  - `docs/adr/0004-trunk-based-with-tags.md` — records the branching model.
+  - `docs/adr/0005-multi-vs-single-variant-split.md` — records why both variants are kept.
+- `README.md`: new **Architecture Decisions** section linking to the ADR index.
+- `CONTRIBUTING.md`: ADR workflow added to the contribution flow; new ADRs are MINOR bumps.
+
+### Changed
+
+— None. ADR additions are pure documentation; no Class A or methodology body has been touched.
+
+---
+
 ## [2.1.0] — 2026-05-02
 
 ### Added
