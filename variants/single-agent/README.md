@@ -161,77 +161,21 @@ The methodology files (`BLUEPRINT-GUIDE.md`, role guides, adaptation files) live
 
 ## Installation — Manual Copy
 
-This variant is **manual copy-and-go**. No setup scripts.
+This variant is **manual copy-and-go**. No setup scripts. The full procedure — with copy-and-paste blocks, verification commands, and an FAQ — lives in:
 
-### Step 1 — Clone this repo on the VM that runs OpenClaw
+→ **[`install/MANUAL-SETUP.md`](install/MANUAL-SETUP.md)**
 
-```bash
-git clone https://github.com/tonylnng/gateforge-openclaw-guideline.git
-cd gateforge-openclaw-guideline/variants/single-agent
-```
+### At a glance (7 steps)
 
-### Step 2 — Copy the agent workspace into OpenClaw
+1. **Set workspace paths** — export `GF_GUIDELINE_DIR`, `GF_WORKSPACE_DIR`, `GF_PROJECT_ROOT`.
+2. **Clone the guideline** on the VM — working copy tracks `main`; the agent's authoritative pin is the SHA in `state.md`.
+3. **Copy the agent workspace files** into OpenClaw's workspace path (`SOUL.md`, `AGENTS.md`, `USER.md`, `TOOLS.md`) and symlink the methodology so relative paths resolve.
+4. **Create the secrets files** — `/opt/secrets/gateforge.env` (root, platform) and `~/.config/gateforge/*.env` (agent user, per-app).
+5. **Point OpenClaw at the workspace** — workspace path, agent ID `gateforge-single`, model `anthropic/claude-sonnet-4-6`, sandbox `all`; wire `EnvironmentFile=/opt/secrets/gateforge.env` into the gateway service.
+6. **Create the project Blueprint repo** — pin the guideline commit SHA in `project/state.md`, scaffold the Class C file from `templates/gateforge_PROJECT_TEMPLATE.md`, install the Class A/B pre-commit guard.
+7. **Restart and verify** the agent's reading order; smoke-test with a low-stakes first task.
 
-```
-   gateforge-openclaw-guideline/                  ~/.openclaw/workspace/
-   variants/single-agent/                              │
-   └── agent-workspace/                                │
-       ├── SOUL.md     ────────────────────────▶  ├── SOUL.md
-       ├── AGENTS.md   ────────────────────────▶  ├── AGENTS.md
-       ├── USER.md     ────────────────────────▶  ├── USER.md
-       └── TOOLS.md    ────────────────────────▶  └── TOOLS.md
-```
-
-```bash
-cp -r agent-workspace/. ~/.openclaw/workspace/
-```
-
-### Step 3 — Configure OpenClaw
-
-In your OpenClaw configuration:
-
-- **Sandbox mode:** `all` (Docker-backed; the same agent runs code in DEV/QC phases)
-- **Agent ID:** `gateforge-single`
-- **Default model:** `anthropic/claude-sonnet-4-6`
-- **Workspace path:** the directory you copied `agent-workspace/*` into
-- **Hook token + Telegram bot token:** from your secrets store
-
-See `agent-workspace/TOOLS.md` and `agent-workspace/USER.md` for the full env-var list.
-
-### Step 4 — Place secrets
-
-```
-   ┌─────────────────────────────────────────────────────────────┐
-   │  /opt/secrets/gateforge.env                  root:root 0600 │
-   │    OPENCLAW_TOKEN=…                                          │
-   │    GF_HOOK_TOKEN=…                                           │
-   │                                                              │
-   │  ~/.config/gateforge/github-tokens.env       user 0600       │
-   │    GH_PAT=ghp_…                                              │
-   │                                                              │
-   │  ~/.config/gateforge/anthropic.env           user 0600       │
-   │    ANTHROPIC_API_KEY=sk-ant-…                                │
-   │                                                              │
-   │  ~/.config/gateforge/telegram.env            user 0600       │
-   │    TELEGRAM_BOT_TOKEN=…                                      │
-   │    TELEGRAM_CHAT_ID=…                                        │
-   └─────────────────────────────────────────────────────────────┘
-```
-
-### Step 5 — Pin guideline SHA in your project
-
-```yaml
-# In <project>-blueprint/project/state.md
-guideline_repo: tonylnng/gateforge-openclaw-guideline
-guideline_version: 2.0.0
-guideline_commit: <40-char SHA>
-```
-
-The agent re-reads from this **pinned SHA** for the project's life. Upgrades require an explicit Telegram-approved boundary.
-
-### Step 6 — Restart OpenClaw and verify
-
-The agent should boot, read `SOUL.md`, then descend through the reading-order list above. If it stops with a "missing file" error, check the relative paths to `../../guideline/...` resolve from the workspace.
+For every command, the trade-offs (e.g. tag-pin vs. main-track), and recovery steps, follow [`install/MANUAL-SETUP.md`](install/MANUAL-SETUP.md). Time estimate: ~15 minutes for a clean run.
 
 ---
 

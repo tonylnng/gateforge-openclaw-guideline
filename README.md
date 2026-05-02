@@ -4,7 +4,7 @@
 >
 > The single source of truth for the GateForge Agentic SDLC pipeline — methodology, role guides, and OpenClaw runtime contracts for both the multi-agent and single-agent variants.
 
-[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](./VERSION) [![License](https://img.shields.io/badge/license-Proprietary-lightgrey.svg)](./LICENSE) [![Status](https://img.shields.io/badge/status-active-success.svg)](#release-status) [![Branching](https://img.shields.io/badge/branching-trunk--based-informational.svg)](./CONTRIBUTING.md#branching-model) [![SemVer](https://img.shields.io/badge/versioning-SemVer%202.0.0-orange.svg)](./CONTRIBUTING.md#versioning)
+[![Version](https://img.shields.io/badge/version-2.3.0-blue.svg)](./VERSION) [![License](https://img.shields.io/badge/license-Proprietary-lightgrey.svg)](./LICENSE) [![Status](https://img.shields.io/badge/status-active-success.svg)](#release-status) [![Branching](https://img.shields.io/badge/branching-trunk--based-informational.svg)](./CONTRIBUTING.md#branching-model) [![SemVer](https://img.shields.io/badge/versioning-SemVer%202.0.0-orange.svg)](./CONTRIBUTING.md#versioning)
 
 ---
 
@@ -339,7 +339,8 @@ The methodology in `guideline/` is grounded in published standards. Both variant
 
 | Version | Date       | Status                                                                                       |
 |---------|------------|----------------------------------------------------------------------------------------------|
-| 2.2.0   | 2026-05-02 | **Active** — ADR template + 5 retroactive Architecture Decision Records under `docs/adr/`     |
+| 2.3.0   | 2026-05-02 | **Active** — single-agent manual setup guide (`variants/single-agent/install/MANUAL-SETUP.md`) |
+| 2.2.0   | 2026-05-02 | Superseded — ADR template + 5 retroactive Architecture Decision Records under `docs/adr/`     |
 | 2.1.0   | 2026-05-02 | Superseded — visual presentation upgrade (diagrams, tables, mermaid) across all top docs     |
 | 2.0.0   | 2026-05-02 | Superseded — initial consolidation from `gateforge-openclaw-configs` and `gateforge-openclaw-single` |
 

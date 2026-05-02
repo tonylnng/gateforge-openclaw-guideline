@@ -14,6 +14,22 @@ The format is based on [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.
 
 ---
 
+## [2.3.0] — 2026-05-02
+
+### Added
+
+- **Single-agent manual setup guide** — [`variants/single-agent/install/MANUAL-SETUP.md`](variants/single-agent/install/MANUAL-SETUP.md). Class A operator-facing documentation covering the full copy-and-paste procedure for wiring the single-agent variant into an existing OpenClaw installation. Additive only — no runtime contract change, no project re-baseline.
+  - 7-step happy path with TL;DR checklist, file-layout diagram, copy blocks, and per-step verification commands.
+  - **`main`-tracking working copy** with SHA pinning in `project/state.md` as the authoritative reference — simpler day-to-day upgrades (`git pull` instead of `git checkout vNEW`) while preserving reproducibility through `state.md`.
+  - FAQ section absorbing options, troubleshooting, and "what if" content (different directories, no symlinks, additional secrets, non-systemd OpenClaw, common boot failures, upgrade procedure, project ADR location).
+- **`variants/single-agent/README.md` § Installation** rewritten as a 7-bullet "at a glance" overview that links into the new `MANUAL-SETUP.md`. The previous inline 6-step block (which referenced setup scripts and a Telegram bootstrap layout) is removed.
+
+### Changed
+
+— None. The runtime contract (`SOUL.md`, `AGENTS.md`, `USER.md`, `TOOLS.md`) is unchanged. Only operator-facing setup documentation has been added or restructured.
+
+---
+
 ## [2.2.0] — 2026-05-02
 
 ### Added
